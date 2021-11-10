@@ -1,0 +1,198 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA_Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width"/>
+		
+		<!-- leaflet css -->
+		<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+		   integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+		   crossorigin=""/>
+		   
+		<!-- photo css -->
+		<link rel ="./Leaflet.Photo.css"/>
+		
+		<!-- markercluster -->
+		<link rel="stylesheet" href="dist/MarkerCluster.css">
+		<link rel="stylesheet" href="dist/MarkerCluster.Default.css">
+		
+		
+		<title>Test MLRA Image Page</title>
+
+
+		<!--<script src="./js/Leaflet.Photo.js"></script> -->
+		 
+		  <style>.info {
+			padding: 6px 8px;
+			font: 14px/16px Arial, Helvetica, sans-serif;
+			background: white;
+			background: rgba(255,255,255,0.8);
+			box-shadow: 0 0 15px rgba(0,0,0,0.2);
+			border-radius: 5px;
+		}
+		.info h4 {
+			margin: 0 0 5px;
+			color: #777;
+		}
+		#mapid {
+			width: 100%;
+			height: 100vh;
+		</style>
+	</head> 
+
+	  
+	<body>   
+	<div id="mapid"></div>
+
+
+<!-- geojson data -->
+		 <!-- <script src = "./poly.js"></script> -->
+<script src = "js/MLRA_v52_col.js"></script>
+<script src = "js/MLRA_imgs_v1.js"></script>
+
+<!-- leaflet js -->
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+		   integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+		   crossorigin=""></script>
+		
+<!-- markercluster js -->
+<script src="dist/leaflet.markercluster.js"></script>
+<!--ajax.js-->
+<script src="dist/leaflet.ajax.js"></script>
+<script
+			  src="https://code.jquery.com/jquery-3.6.0.js"
+			  integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+			  crossorigin="anonymous"></script>
+		<script>
+var mymap = L.map('mapid').setView([42.0, -100.0], 4);
+
+	L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+		maxZoom: 18,
+		attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+			'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+		id: 'mapbox/streets-v8',
+		tileSize: 512,
+		zoomOffset: -1
+	}).addTo(mymap);
+	
+	
+	
+	// control mlra info on hover
+	var info = L.control();
+
+	info.onAdd = function (mymap) {   //extends method for L.control, returns container and adds listeners
+		this._div = L.DomUtil.create('div', 'info'); //onAdd, adds utility function to DOM and .create to set tagNames
+		this.update();
+		return this._div;
+	};
+
+	info.update = function (props) { // 
+		this._div.innerHTML = '<h4>Major Land Resource Areas</h4>' +  (props ?
+			'<b>' + 'MLRA NAME: </b>' +  props.MLRA_NAME + '<br /><b>MLRA Symbol: </b>' + props.MLRARSYM
+			: 'Hover over a Major Land Resource Area');
+	};
+
+	info.addTo(mymap); //method for L.control to the map
+	
+	
+	function style(feature) {
+		return {
+			weight: .5,
+			opacity: 1,
+			color: 'white',
+			//dashArray: '3',
+			fillOpacity: 0.5,
+			fillColor: feature.properties.lrr_color
+		};
+	}
+	
+		
+	function highlightFeature(e) {
+		var layer = e.target;
+
+		layer.setStyle({
+			weight: 2,
+			color: '#666',
+			dashArray: '',
+			fillOpacity: 0.2
+		});
+
+/*		if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
+			layer.bringToFront();
+		}
+*/
+		info.update(layer.feature.properties);
+	}
+
+	var polyLayer;
+	//var imgpoints;
+
+
+	function resetHighlight(e) {
+		polyLayer.resetStyle(e.target);
+		info.update()
+	}
+
+	function zoomToFeature(e) {
+		mymap.fitBounds(e.target.getBounds());
+	}
+	
+	function onEachFeature(feature, layer) {
+    layer.on({
+        mouseover: highlightFeature,
+        mouseout: resetHighlight,
+        click: zoomToFeature
+    });
+}
+
+
+	
+	
+
+var polyLayer = L.geoJSON(mlrapoly, {
+	style:style, 
+	onEachFeature:onEachFeature
+	})//.addTo(mymap);
+	
+		//create icon for marker
+	const geojsonMarkerOptions = {
+		radius: 4,
+		fillcolor: "#ff7800",
+		color: "#000",
+		weight: 1,
+		opacity: 1,
+		fillOpacity: 0.8
+	};
+	
+	
+	
+	var markers = L.markerClusterGroup();
+	
+	// loading geojson, may need ajax to load geojson from local file 
+	var pointLayer = L.geoJSON(imgpoints, {
+		pointToLayer: function(feature, latlng){ //str += concatenation
+			var str = "<h4 class = 'text-align-center'>MLRA Image</h4>";
+			str += "<div class='popup'><table class='table'>";
+			str += "<thead><tr><th>"+feature.properties.title+"</th></tr></thead>";
+			str += "<tbody><tr><td><a href="+feature.properties.src+" target='blank'>";
+			str += "<img src="+feature.properties.src+" width='200px'style='vertical-align:middle;margin:0px 0px'></td></tr></div>";
+			return markers.addLayer(L.circleMarker(latlng, geojsonMarkerOptions).bindPopup(str)); 
+		}
+	});
+	//pointLayer.addTo(mymap);
+	
+	//marker clustering
+	//mymap.addLayer(markers);
+	
+	L.layerGroup([polyLayer, pointLayer])
+		.addTo(mymap)
+		.addLayer(markers);
+
+
+
+
+		</script>
+
+	</body>
+</html>
