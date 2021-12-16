@@ -1,2 +1,2 @@
-# mlra-image-map
-A web map that shows LRR by color and images from location or describing an MLRA
+# MLRA Image Map
+Create a webmap with leaflet to feature images of Major Land Resource Areas to be an addition to the updated Agricultural Handbook 296. There are over 200 photos for MLRA's around the U.S. and U.S. territories display the unique landscapes and land uses within each MLRA.  A webmap containing the extents of all the MLRA's and images taken within that area can make discovering these images with the geographic context create a deeper understanding of an MLRA of interest.
